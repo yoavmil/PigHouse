@@ -1,0 +1,12 @@
+{
+  "name": "pighouse",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "fe":         "npm start --prefix PigHouseFE",
+    "be":         "npm run dev --prefix server",
+    "be:build":   "npm run build --prefix server",
+    "be:start":   "npm start --prefix server",
+    "dev":        "npm run fe & npm run be"
+  }
+}
