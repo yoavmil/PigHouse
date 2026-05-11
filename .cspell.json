@@ -1,0 +1,5 @@
+{
+  "version": "0.2",
+  "ignorePaths": ["**/node_modules/**"],
+  "ignoreRegExpList": ["[\\u0590-\\u05FF]+"]
+}
