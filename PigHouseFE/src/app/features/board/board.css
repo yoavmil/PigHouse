@@ -20,6 +20,23 @@ mat-accordion {
 .panel-title {
   font-weight: 600;
   font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.approve-btn {
+  background-color: #2e7d32 !important;
+  color: white !important;
+  font-size: 0.85rem;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
+}
+
+.pending-panel {
+  border-right: 4px solid #f9a825 !important;
 }
 
 .full-width {

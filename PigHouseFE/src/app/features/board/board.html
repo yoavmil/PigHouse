@@ -11,11 +11,18 @@
     <mat-accordion hideToggle>
 
       @for (card of cards.controls; track cardIds[$index]; let ci = $index) {
-        <mat-expansion-panel class="card-panel">
+        <mat-expansion-panel class="card-panel"
+          [class.pending-panel]="cards.at(ci).controls.state.value === 'pending'">
 
           <mat-expansion-panel-header>
             <mat-panel-title class="panel-title">
-              {{ cardTitle(ci) }}
+              <span class="title-text">{{ cardTitle(ci) }}</span>
+              @if (cards.at(ci).controls.state.value === 'pending') {
+                <button mat-flat-button class="approve-btn"
+                        (click)="approve(ci, $event)">
+                  מאושר ✓
+                </button>
+              }
             </mat-panel-title>
           </mat-expansion-panel-header>
 

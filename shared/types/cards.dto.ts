@@ -11,6 +11,7 @@ export interface CreateCardRequest {
 export interface UpdateCardRequest {
   title?:    string;
   price?:    number;
+  state?:    CardState;
   subtasks?: {
     id?:  string; // omit to add new; include to update existing
     text: string;

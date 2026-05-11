@@ -11,6 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Card, CardState } from 'shared/types';
 import { CardService } from '../../core/services/card.service';
+import { ApprovalsService } from '../../core/services/approvals.service';
 
 type SubtaskControl = FormControl<string | null>;
 type CardGroup = FormGroup<{
@@ -36,8 +37,9 @@ type CardGroup = FormGroup<{
   styleUrl:    './board.css',
 })
 export class BoardComponent {
-  private cardService = inject(CardService);
-  private destroyRef  = inject(DestroyRef);
+  private cardService      = inject(CardService);
+  private approvalsService = inject(ApprovalsService);
+  private destroyRef       = inject(DestroyRef);
 
   loading            = signal(true);
   error              = signal<string | null>(null);
@@ -80,12 +82,12 @@ export class BoardComponent {
     const ci = this.cardIds.indexOf(id);
     if (ci === -1) return;
 
-    const { title, price, subtasks } = this.cards.at(ci).value;
+    const { title, price, state, subtasks } = this.cards.at(ci).value;
     const filteredSubtasks = (subtasks ?? [])
       .filter(t => !!t?.trim())
       .map(text => ({ text: text! }));
 
-    this.cardService.update(id, { title: title ?? '', price: price ?? 0, subtasks: filteredSubtasks })
+    this.cardService.update(id, { title: title ?? '', price: price ?? 0, state: state ?? undefined, subtasks: filteredSubtasks })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
   }
@@ -121,6 +123,18 @@ export class BoardComponent {
     this.cardService.create({ title: '', price: 10, subtasks: [] })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: card => this.pushCard(card) });
+  }
+
+  approve(ci: number, event: MouseEvent): void {
+    event.stopPropagation();
+    const id = this.cardIds[ci];
+    this.approvalsService.approve(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.cards.at(ci).controls.state.setValue('suspended', { emitEvent: false });
+        },
+      });
   }
 
   requestDelete(ci: number): void { this.confirmDeleteIndex.set(ci); }

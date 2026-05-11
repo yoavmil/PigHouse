@@ -1,16 +1,37 @@
-import { Router } from 'express';
-import { authMiddleware } from '../middleware/auth';
+import { Router, Request, Response } from 'express';
+import { authMiddleware, requireRole, AuthRequest } from '../middleware/auth';
+import { Card } from '../models/card.model';
+import { User } from '../models/user.model';
 
 const router = Router();
 
 router.use(authMiddleware);
 
-// GET  /api/approvals
 // POST /api/approvals/:id/approve
-// POST /api/approvals/:id/reject
+router.post('/:id/approve', requireRole('parent'), async (req: Request, res: Response): Promise<void> => {
+  const { user } = req as AuthRequest;
 
-router.get('/',                  (_req, res) => res.status(501).json({ error: 'Not implemented' }));
-router.post('/:id/approve',      (_req, res) => res.status(501).json({ error: 'Not implemented' }));
-router.post('/:id/reject',       (_req, res) => res.status(501).json({ error: 'Not implemented' }));
+  const card = await Card.findOne({ _id: req.params['id'], familyId: user.familyId, state: 'pending' });
+  if (!card) { res.status(404).json({ error: 'Card not found or not pending' }); return; }
+
+  const kid = await User.findById(card.takenBy);
+  if (!kid) { res.status(404).json({ error: 'Kid not found' }); return; }
+
+  kid.balance += card.price;
+  (kid.completedCards as any[]).push({
+    cardId:      card._id,
+    cardTitle:   card.title,
+    amount:      card.price,
+    completedAt: new Date(),
+  });
+  await kid.save();
+
+  card.state  = 'suspended';
+  card.takenBy = null;
+  card.subtasks.forEach(s => { s.done = false; });
+  await card.save();
+
+  res.json({ card: card.toJSON(), updatedUser: kid.toJSON() });
+});
 
 export default router;

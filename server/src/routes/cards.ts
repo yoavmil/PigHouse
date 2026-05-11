@@ -13,6 +13,14 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
   res.json(cards.map(c => c.toJSON()));
 });
 
+// GET /api/cards/:id
+router.get('/:id', async (req: Request, res: Response): Promise<void> => {
+  const { user } = req as AuthRequest;
+  const card = await Card.findOne({ _id: req.params['id'], familyId: user.familyId });
+  if (!card) { res.status(404).json({ error: 'Card not found' }); return; }
+  res.json(card.toJSON());
+});
+
 // POST /api/cards — create a new card
 router.post('/', requireRole('parent'), async (req: Request, res: Response): Promise<void> => {
   const { user } = req as AuthRequest;
@@ -31,13 +39,14 @@ router.post('/', requireRole('parent'), async (req: Request, res: Response): Pro
 // PUT /api/cards/:id — replace title, price and subtasks
 router.put('/:id', requireRole('parent'), async (req: Request, res: Response): Promise<void> => {
   const { user } = req as AuthRequest;
-  const { title, price, subtasks } = req.body;
+  const { title, price, state, subtasks } = req.body;
 
   const card = await Card.findOneAndUpdate(
     { _id: req.params['id'], familyId: user.familyId },
     {
       title,
       price,
+      ...(state !== undefined ? { state, ...(state === 'available' ? { takenBy: null } : {}) } : {}),
       subtasks: (subtasks ?? []).map((t: { text: string }) => ({ text: t.text, done: false })),
     },
     { new: true }
@@ -61,7 +70,6 @@ router.patch('/:id/state', async (req: Request, res: Response): Promise<void> =>
   const { state } = req.body as { state: string };
 
   if (state === 'taken') {
-    // Atomic check: only succeed if card is still available
     const card = await Card.findOneAndUpdate(
       { _id: req.params['id'], familyId: user.familyId, state: 'available' },
       { state: 'taken', takenBy: user._id },
@@ -72,8 +80,19 @@ router.patch('/:id/state', async (req: Request, res: Response): Promise<void> =>
     return;
   }
 
-  // Parent-only transitions
-  if (!['suspended', 'available', 'pending'].includes(state)) {
+  if (state === 'pending') {
+    // Kid who holds the card marks it done; parents can also override
+    const filter = user.role === 'kid'
+      ? { _id: req.params['id'], familyId: user.familyId, state: 'taken', takenBy: user._id }
+      : { _id: req.params['id'], familyId: user.familyId };
+    const card = await Card.findOneAndUpdate(filter, { state: 'pending' }, { new: true });
+    if (!card) { res.status(403).json({ error: 'אין גישה' }); return; }
+    res.json(card.toJSON());
+    return;
+  }
+
+  // Parent-only: suspended / available
+  if (!['suspended', 'available'].includes(state)) {
     res.status(400).json({ error: 'Invalid state' });
     return;
   }
@@ -86,7 +105,26 @@ router.patch('/:id/state', async (req: Request, res: Response): Promise<void> =>
   res.json(card.toJSON());
 });
 
-// PATCH /api/cards/:id/subtasks/:subtaskId — (subtask toggle — to be implemented later)
-router.patch('/:id/subtasks/:subtaskId', (_req, res) => res.status(501).json({ error: 'Not implemented' }));
+// PATCH /api/cards/:id/subtasks/:subtaskId — toggle done (kid who holds the card only)
+router.patch('/:id/subtasks/:subtaskId', async (req: Request, res: Response): Promise<void> => {
+  const { user } = req as AuthRequest;
+  const { done } = req.body as { done: boolean };
+
+  const card = await Card.findOne({
+    _id:      req.params['id'],
+    familyId: user.familyId,
+    state:    'taken',
+    takenBy:  user._id,
+  });
+  if (!card) { res.status(403).json({ error: 'אין גישה' }); return; }
+
+  const subtask = card.subtasks.find(s => (s as any)._id.toString() === req.params['subtaskId']);
+  if (!subtask) { res.status(404).json({ error: 'Subtask not found' }); return; }
+
+  subtask.done = done;
+  await card.save();
+
+  res.json({ id: (subtask as any)._id.toString(), text: subtask.text, done: subtask.done });
+});
 
 export default router;
