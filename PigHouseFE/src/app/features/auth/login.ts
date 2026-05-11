@@ -47,7 +47,7 @@ export class LoginComponent implements OnInit {
     this.error.set(null);
 
     this.auth.login({ familyName: familyName!, userName: userName! }).subscribe({
-      next: () => this.router.navigate(['/board']),
+      next: res => this.router.navigate([res.user.role === 'parent' ? '/board' : '/tasks']),
       error: err => {
         this.error.set(err.error?.error ?? 'שם משפחה או שם משתמש שגויים');
         this.loading.set(false);

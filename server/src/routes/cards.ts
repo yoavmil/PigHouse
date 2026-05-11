@@ -55,8 +55,36 @@ router.delete('/:id', requireRole('parent'), async (req: Request, res: Response)
   res.status(204).send();
 });
 
-// PATCH /api/cards/:id/state — (state transitions — to be implemented later)
-router.patch('/:id/state', (_req, res) => res.status(501).json({ error: 'Not implemented' }));
+// PATCH /api/cards/:id/state
+router.patch('/:id/state', async (req: Request, res: Response): Promise<void> => {
+  const { user } = req as AuthRequest;
+  const { state } = req.body as { state: string };
+
+  if (state === 'taken') {
+    // Atomic check: only succeed if card is still available
+    const card = await Card.findOneAndUpdate(
+      { _id: req.params['id'], familyId: user.familyId, state: 'available' },
+      { state: 'taken', takenBy: user._id },
+      { new: true }
+    );
+    if (!card) { res.status(409).json({ error: 'הכרטיס כבר נלקח' }); return; }
+    res.json(card.toJSON());
+    return;
+  }
+
+  // Parent-only transitions
+  if (!['suspended', 'available', 'pending'].includes(state)) {
+    res.status(400).json({ error: 'Invalid state' });
+    return;
+  }
+  const card = await Card.findOneAndUpdate(
+    { _id: req.params['id'], familyId: user.familyId },
+    { state, ...(state === 'available' ? { takenBy: null } : {}) },
+    { new: true }
+  );
+  if (!card) { res.status(404).json({ error: 'Card not found' }); return; }
+  res.json(card.toJSON());
+});
 
 // PATCH /api/cards/:id/subtasks/:subtaskId — (subtask toggle — to be implemented later)
 router.patch('/:id/subtasks/:subtaskId', (_req, res) => res.status(501).json({ error: 'Not implemented' }));

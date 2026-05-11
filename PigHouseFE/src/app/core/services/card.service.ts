@@ -12,4 +12,5 @@ export class CardService {
   create(req: CreateCardRequest)        { return this.http.post<Card>(this.BASE, req); }
   update(id: string, req: UpdateCardRequest) { return this.http.put<Card>(`${this.BASE}/${id}`, req); }
   delete(id: string)                    { return this.http.delete<void>(`${this.BASE}/${id}`); }
+  takeCard(id: string)                  { return this.http.patch<Card>(`${this.BASE}/${id}/state`, { state: 'taken' }); }
 }
