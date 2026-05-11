@@ -13,7 +13,7 @@
   align-items: center;
   gap: 32px;
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
 }
 
 .title-section {
@@ -22,16 +22,10 @@
 }
 
 .pig-emoji {
-  font-size: 72px;
+  font-size: 56px;
   display: block;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
   filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
-  animation: bounce 2.5s ease-in-out infinite;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-10px); }
 }
 
 .app-title {
@@ -48,7 +42,7 @@
   opacity: 0.85;
 }
 
-.login-card {
+.register-card {
   width: 100%;
   border-radius: 20px !important;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
@@ -61,31 +55,35 @@
   color: var(--mat-sys-on-surface);
 }
 
+.kids-heading {
+  font-size: 0.95rem;
+  font-weight: 500;
+  margin: 8px 0 12px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
 .full-width {
   width: 100%;
+}
+
+.parents-row {
+  display: flex;
+  gap: 12px;
+}
+
+.half-width {
+  flex: 1;
 }
 
 .action-btn {
   height: 48px;
   font-size: 1rem;
+  margin-top: 8px;
 }
 
-.divider-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 20px 0;
-}
-
-.divider-row mat-divider {
-  flex: 1;
-  position: static !important;
-}
-
-.divider-text {
-  font-size: 0.85rem;
+.back-btn {
+  margin-top: 8px;
   color: var(--mat-sys-outline);
-  white-space: nowrap;
 }
 
 .error-msg {

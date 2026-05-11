@@ -1,0 +1,72 @@
+<div class="hero">
+  <div class="hero-content">
+
+    <div class="title-section">
+      <span class="pig-emoji">🐷</span>
+      <h1 class="app-title">בית של חזירים</h1>
+      <p class="app-subtitle">יצירת משפחה חדשה</p>
+    </div>
+
+    <mat-card class="register-card">
+      <mat-card-content>
+
+        <p class="card-heading">פרטי המשפחה</p>
+
+        <form [formGroup]="form" (ngSubmit)="register()">
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>שם המשפחה</mat-label>
+            <input matInput formControlName="familyName" placeholder="כהן">
+          </mat-form-field>
+
+          <div class="parents-row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>שם האבא</mat-label>
+              <input matInput formControlName="dadName" placeholder="יוסי">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>שם האמא</mat-label>
+              <input matInput formControlName="momName" placeholder="רחל">
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>מספר ילדים</mat-label>
+            <input matInput type="number" formControlName="kidCount" min="1" max="10">
+          </mat-form-field>
+
+          @if (kids.length > 0) {
+            <p class="kids-heading">שמות הילדים</p>
+            @for (kid of kids.controls; track $index) {
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>ילד {{ $index + 1 }}</mat-label>
+                <input matInput [formControl]="kidControl($index)" placeholder="שם הילד">
+              </mat-form-field>
+            }
+          }
+
+          @if (error()) {
+            <p class="error-msg">{{ error() }}</p>
+          }
+
+          <button
+            mat-flat-button
+            type="submit"
+            class="full-width action-btn"
+            [disabled]="form.invalid || loading()"
+          >
+            {{ loading() ? 'יוצר משפחה...' : 'יצירת משפחה' }}
+          </button>
+
+        </form>
+
+        <button mat-button class="full-width back-btn" (click)="back()">
+          חזרה
+        </button>
+
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>

@@ -12,19 +12,32 @@
 
         <p class="card-heading">כניסה למערכת</p>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>שם מלא</mat-label>
-          <input matInput [formControl]="nameControl" placeholder="ישראל ישראלי" autocomplete="name">
-        </mat-form-field>
+        <form [formGroup]="form" (ngSubmit)="login()">
 
-        <button
-          mat-flat-button
-          class="full-width action-btn"
-          [disabled]="nameControl.invalid"
-          (click)="login()"
-        >
-          כניסה
-        </button>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>שם המשפחה</mat-label>
+            <input matInput formControlName="familyName" placeholder="כהן" autocomplete="organization">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>שם פרטי</mat-label>
+            <input matInput formControlName="userName" placeholder="ישראל" autocomplete="name">
+          </mat-form-field>
+
+          @if (error()) {
+            <p class="error-msg">{{ error() }}</p>
+          }
+
+          <button
+            mat-flat-button
+            type="submit"
+            class="full-width action-btn"
+            [disabled]="form.invalid || loading()"
+          >
+            {{ loading() ? 'כניסה...' : 'כניסה' }}
+          </button>
+
+        </form>
 
         <div class="divider-row">
           <mat-divider />

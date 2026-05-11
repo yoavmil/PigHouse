@@ -1,6 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -23,21 +23,39 @@ import { AuthService } from '../../core/auth/auth.service';
 })
 export class LoginComponent implements OnInit {
   private router = inject(Router);
-  private authService = inject(AuthService);
+  private auth   = inject(AuthService);
 
-  nameControl = new FormControl('', [Validators.required, Validators.minLength(2)]);
+  error   = signal<string | null>(null);
+  loading = signal(false);
+
+  form = new FormGroup({
+    familyName: new FormControl('', [Validators.required, Validators.minLength(2)]),
+    userName:   new FormControl('', [Validators.required, Validators.minLength(2)]),
+  });
 
   ngOnInit(): void {
-    if (this.authService.currentUser()) {
+    if (this.auth.currentUser()) {
       this.router.navigate(['/board']);
     }
   }
 
   login(): void {
-    // TODO: wire up to backend
+    if (this.form.invalid || this.loading()) return;
+
+    const { familyName, userName } = this.form.value;
+    this.loading.set(true);
+    this.error.set(null);
+
+    this.auth.login({ familyName: familyName!, userName: userName! }).subscribe({
+      next: () => this.router.navigate(['/board']),
+      error: err => {
+        this.error.set(err.error?.error ?? 'שם משפחה או שם משתמש שגויים');
+        this.loading.set(false);
+      },
+    });
   }
 
   createFamily(): void {
-    // TODO: wire up to backend
+    this.router.navigate(['/register']);
   }
 }
