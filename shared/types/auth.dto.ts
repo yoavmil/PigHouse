@@ -4,22 +4,18 @@ import { User } from './models';
 export interface RegisterRequest {
   familyName:  string;
   parentName:  string;
-  password:    string;
 }
 
 export interface RegisterResponse {
-  token: string;
-  user:  User;
+  user: User;
 }
 
 // POST /api/auth/login
 export interface LoginRequest {
   familyName: string;
   userName:   string;
-  password:   string;
 }
 
 export interface LoginResponse {
-  token: string;
-  user:  User;
+  user: User;
 }
