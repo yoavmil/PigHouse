@@ -13,9 +13,9 @@ SubtaskSchema.set('toJSON', {
 const CardSchema = new Schema(
   {
     familyId: { type: Schema.Types.ObjectId, ref: 'Family', required: true },
-    title:    { type: String, required: true },
+    title:    { type: String, default: '' },
     subtasks: { type: [SubtaskSchema], default: [] },
-    price:    { type: Number, required: true },
+    price:    { type: Number, default: 10 },
     state:    {
       type:    String,
       enum:    ['suspended', 'available', 'taken', 'pending'],

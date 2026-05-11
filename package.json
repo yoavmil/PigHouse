@@ -6,7 +6,8 @@
     "fe":         "npm start --prefix PigHouseFE",
     "be":         "npm run dev --prefix server",
     "be:build":   "npm run build --prefix server",
-    "be:start":   "npm start --prefix server",
-    "dev":        "npm run fe & npm run be"
+    "be:start":   "npm run be:build && npm start --prefix server",
+    "dev":        "npm run fe & npm run be",
+    "kill:be":    "npx kill-port 3000"
   }
 }

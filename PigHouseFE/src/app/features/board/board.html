@@ -1,0 +1,86 @@
+<div class="board">
+
+  @if (loading()) {
+    <div class="center-msg">
+      <mat-spinner diameter="40" />
+    </div>
+  } @else if (error()) {
+    <div class="center-msg error-msg">{{ error() }}</div>
+  } @else {
+
+    <mat-accordion hideToggle>
+
+      @for (card of cards.controls; track cardIds[$index]; let ci = $index) {
+        <mat-expansion-panel class="card-panel">
+
+          <mat-expansion-panel-header>
+            <mat-panel-title class="panel-title">
+              {{ cardTitle(ci) }}
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+
+          <!-- Title -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>שם המשימה</mat-label>
+            <input matInput [formControl]="card.controls.title" placeholder="למשל: סלון">
+          </mat-form-field>
+
+          <!-- Price -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>מחיר</mat-label>
+            <input matInput type="number" [formControl]="card.controls.price" min="0">
+            <span matTextSuffix>₪</span>
+          </mat-form-field>
+
+          <!-- State -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>סטטוס</mat-label>
+            <mat-select [formControl]="card.controls.state">
+              <mat-option value="available">פנוי</mat-option>
+              <mat-option value="suspended">מושהה</mat-option>
+              <mat-option value="taken">תפוס</mat-option>
+              <mat-option value="pending">ממתין לאישור</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Subtasks -->
+          <p class="subtasks-label">משימות</p>
+
+          @for (subtask of getSubtasks(ci).controls; track $index; let si = $index; let isLast = $last) {
+            <mat-form-field appearance="outline" class="full-width subtask-field">
+              <input
+                matInput
+                [formControl]="subtask"
+                [placeholder]="isLast ? 'הוסף משימה...' : ''"
+                (input)="onSubtaskInput(ci, si)"
+                (blur)="onSubtaskBlur(ci, si)"
+              >
+            </mat-form-field>
+          }
+
+          <!-- Delete -->
+          @if (confirmDeleteIndex() === ci) {
+            <div class="confirm-row">
+              <span class="confirm-text">האם אתה בטוח?</span>
+              <button mat-flat-button class="confirm-yes" (click)="confirmDelete(ci)">כן, מחק</button>
+              <button mat-stroked-button (click)="cancelDelete()">ביטול</button>
+            </div>
+          } @else {
+            <button mat-flat-button class="full-width delete-btn" (click)="requestDelete(ci)">
+              מחק כרטיס
+            </button>
+          }
+
+        </mat-expansion-panel>
+      }
+
+    </mat-accordion>
+
+    <!-- Add card FAB -->
+    <button mat-fab class="add-fab" aria-label="כרטיס חדש" (click)="addCard()">
+      <mat-icon>add</mat-icon>
+    </button>
+
+  }
+
+</div>
