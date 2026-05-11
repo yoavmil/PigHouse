@@ -5,63 +5,13 @@ All timestamps are ISO 8601 strings (`"2026-05-11T08:00:00.000Z"`).
 All money values are numbers in ₪ (shekel), two decimal places.  
 Every authenticated request carries `Authorization: Bearer <token>`.
 
----
-
-## Shared Types
-
-### `CompletedCard`
-```ts
-{
-  cardId:      string
-  cardTitle:   string   // snapshot of title at approval time
-  amount:      number
-  completedAt: string
-}
-```
-
-### `User`
-```ts
-{
-  id:             string
-  familyId:       string
-  name:           string
-  role:           'parent' | 'kid'
-  balance:        number           // current unpaid earnings — kids only, 0 for parents
-  completedCards: CompletedCard[]  // full history — kids only, [] for parents
-  createdAt:      string
-}
-```
-
-### `Subtask`
-```ts
-{
-  id:   string
-  text: string
-  done: boolean
-}
-```
-
-### `Card`
-```ts
-{
-  id:        string
-  familyId:  string
-  title:     string
-  subtasks:  Subtask[]
-  price:     number
-  state:     'suspended' | 'available' | 'taken' | 'pending'
-  takenBy:   string | null   // userId of the kid holding it, null otherwise
-  createdAt: string
-  updatedAt: string
-}
-```
-
-### Error response (all endpoints)
-```ts
-{
-  error: string              // human-readable message (Hebrew or English)
-}
-```
+> **Canonical type definitions live in [`shared/types/`](../shared/types/).**  
+> This document describes endpoint behaviour. For exact shapes, read the source:
+> - Models: [`shared/types/models.ts`](../shared/types/models.ts)
+> - Auth DTOs: [`shared/types/auth.dto.ts`](../shared/types/auth.dto.ts)
+> - User DTOs: [`shared/types/users.dto.ts`](../shared/types/users.dto.ts)
+> - Card DTOs: [`shared/types/cards.dto.ts`](../shared/types/cards.dto.ts)
+> - Approval DTOs: [`shared/types/approvals.dto.ts`](../shared/types/approvals.dto.ts)
 
 ---
 
@@ -70,44 +20,16 @@ Every authenticated request carries `Authorization: Bearer <token>`.
 ### `POST /api/auth/register`
 Create a new family + initial parent account.
 
-**Request**
-```ts
-{
-  familyName:   string
-  parentName:   string
-  password:     string
-}
-```
-
-**Response `201`**
-```ts
-{
-  token: string
-  user:  User
-}
-```
+**Request** — `RegisterRequest`  
+**Response `201`** — `RegisterResponse` `{ token, user }`
 
 ---
 
 ### `POST /api/auth/login`
-Login as a family member.
+Login as a family member. JWT payload carries `familyId`, `userId`, `role`.
 
-**Request**
-```ts
-{
-  familyName: string
-  userName:   string
-  password:   string
-}
-```
-
-**Response `200`**
-```ts
-{
-  token: string   // JWT — carries familyId, userId, role
-  user:  User
-}
-```
+**Request** — `LoginRequest`  
+**Response `200`** — `LoginResponse` `{ token, user }`
 
 ---
 
@@ -115,180 +37,91 @@ Login as a family member.
 
 ### `GET /api/users`
 List all members of the calling user's family.  
-**Role:** parent
-
-**Response `200`**
-```ts
-User[]
-```
+**Role:** parent  
+**Response `200`** — `User[]`
 
 ---
 
 ### `POST /api/users`
 Add a new family member.  
-**Role:** parent
-
-**Request**
-```ts
-{
-  name:     string
-  role:     'parent' | 'kid'
-  password: string
-}
-```
-
-**Response `201`**
-```ts
-User
-```
+**Role:** parent  
+**Request** — `CreateUserRequest`  
+**Response `201`** — `User`
 
 ---
 
 ### `GET /api/users/:id/history`
-Earnings history for a user — returns the `completedCards` array from the user record.  
-**Role:** all (kids can only fetch their own)
-
-**Response `200`**
-```ts
-CompletedCard[]
-```
+Returns the `completedCards` array from the user record.  
+**Role:** all (kids can only fetch their own)  
+**Response `200`** — `CompletedCard[]`
 
 ---
 
 ## Cards
 
 ### `GET /api/cards`
-List all cards for the family.  
-Kids receive only `available` and `taken` cards (`suspended` is hidden).  
-**Role:** all
-
-**Response `200`**
-```ts
-Card[]
-```
+List all cards for the family. Kids receive only `available` and `taken` cards — `suspended` is filtered out server-side.  
+**Role:** all  
+**Response `200`** — `Card[]`
 
 ---
 
 ### `POST /api/cards`
 Create a new card.  
-**Role:** parent
-
-**Request**
-```ts
-{
-  title:    string
-  subtasks: { text: string }[]
-  price:    number
-}
-```
-
-**Response `201`**
-```ts
-Card
-```
+**Role:** parent  
+**Request** — `CreateCardRequest`  
+**Response `201`** — `Card`
 
 ---
 
 ### `PUT /api/cards/:id`
-Update a card's editable fields.  
-**Role:** parent
-
-**Request**
-```ts
-{
-  title?:    string
-  price?:    number
-  subtasks?: {
-    id?:  string   // omit to add new; include to update existing
-    text: string
-  }[]
-}
-```
-
-**Response `200`**
-```ts
-Card
-```
+Update a card's editable fields. To add a new subtask omit its `id`; to update an existing one include it.  
+**Role:** parent  
+**Request** — `UpdateCardRequest`  
+**Response `200`** — `Card`
 
 ---
 
 ### `DELETE /api/cards/:id`
 Delete a card.  
-**Role:** parent
-
+**Role:** parent  
 **Response `204`** — no body
 
 ---
 
 ### `PATCH /api/cards/:id/state`
-Transition a card to a new state (server validates role + allowed transitions).  
-**Role:** * (role-checked per transition rules)
-
-**Request**
-```ts
-{
-  state: 'suspended' | 'available' | 'taken' | 'pending'
-}
-```
-
-**Response `200`**
-```ts
-Card
-```
+Transition a card state. Server enforces allowed transitions and role rules.  
+**Role:** role-checked per transition (see state machine in CLAUDE.md)  
+**Request** — `StateTransitionRequest`  
+**Response `200`** — `Card`
 
 ---
 
 ### `PATCH /api/cards/:id/subtasks/:subtaskId`
-Toggle a subtask's completion.  
-Only allowed while card is `taken`, by the kid who holds it.  
-**Role:** kid
-
-**Request**
-```ts
-{
-  done: boolean
-}
-```
-
-**Response `200`**
-```ts
-Subtask
-```
+Toggle a subtask's completion. Only allowed while the card is `taken`, by the kid who holds it.  
+**Role:** kid  
+**Request** — `ToggleSubtaskRequest`  
+**Response `200`** — `Subtask`
 
 ---
 
 ## Approvals
 
 ### `GET /api/approvals`
-List all cards in `pending` state.  
-**Role:** parent
-
-**Response `200`**
-```ts
-Card[]
-```
+List all cards currently in `pending` state.  
+**Role:** parent  
+**Response `200`** — `Card[]`
 
 ---
 
 ### `POST /api/approvals/:id/approve`
 Approve a pending card — credits the kid, resets card to `available`.  
-**Role:** parent
-
-**Response `200`**
-```ts
-{
-  card:        Card   // state is now 'available'
-  updatedUser: User   // kid's updated balance + completedCards
-}
-```
+**Role:** parent  
+**Response `200`** — `ApproveResponse` `{ card, updatedUser }`
 
 ---
 
 ### `POST /api/approvals/:id/reject`
-Reject a pending card — reverts to `taken`.  
-**Role:** parent
-
-**Response `200`**
-```ts
-Card   // state is now 'taken'
-```
+Reject a pending card — reverts it to `taken`.  
+**Role:** parent  
+**Response `200`** — `Card`

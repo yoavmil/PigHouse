@@ -145,6 +145,33 @@ available ──►│                           │
 
 ---
 
+## API Contract
+
+Full endpoint reference (request/response types, roles, behaviour): [`docs/dto.md`](docs/dto.md)
+
+---
+
+## Shared Types
+
+The canonical API contract lives in `shared/types/` at the repo root. Both FE and BE import from this directory — never duplicate type definitions.
+
+```
+shared/types/
+├── models.ts           # Core entities: User, CompletedCard, Card, Subtask, UserRole, CardState, ApiError
+├── auth.dto.ts         # LoginRequest/Response, RegisterRequest/Response
+├── users.dto.ts        # CreateUserRequest, GetUsersResponse, GetUserHistoryResponse
+├── cards.dto.ts        # CreateCardRequest, UpdateCardRequest, StateTransitionRequest, ToggleSubtaskRequest
+├── approvals.dto.ts    # ApproveResponse
+└── index.ts            # Barrel export — import everything from 'shared/types'
+```
+
+Each side must configure its `tsconfig.json` with a path alias so imports resolve correctly:
+```json
+"paths": { "shared/types": ["../../shared/types/index.ts"] }
+```
+
+---
+
 ## Frontend Structure (Angular)
 
 ```
