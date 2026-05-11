@@ -7,7 +7,11 @@ import approvalsRouter from './routes/approvals';
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.NODE_ENV === 'production'
+  ? ['https://yoavmil.github.io']
+  : ['http://localhost:4200'];
+
+app.use(cors({ origin: allowedOrigins }));
 app.use(express.json());
 
 app.get('/api/health', (_req, res) => res.json({ ok: true }));
