@@ -34,12 +34,13 @@ Each **family** is the top-level data boundary. All cards, users, transactions, 
 | `createdAt`  | Timestamp                                        |
 
 ### Login Flow
-- A family logs in with a shared family identifier (e.g., family name or invite code).
+- A family logs in with a shared family identifier (family name) and a member name.
 - Within the family, each member (parent or kid) has their own account.
-- Authentication is family-scoped: JWT payload carries both `familyId` and `userId`.
-- All API queries are automatically filtered by `familyId` derived from the token — no cross-family data access is possible.
+- On login the server returns the full `User` object; the client stores it in `localStorage`.
+- All subsequent API requests send the user's `id` in the `X-User-Id` header.
+- The `authMiddleware` looks up the user by that ID and attaches it to the request — all queries are automatically scoped to `user.familyId`.
 
-> Security is deferred for MVP, but the schema and query layer must always enforce `familyId` scoping from day one.
+> Security is deferred for MVP — no passwords, no JWT. The schema and query layer enforce `familyId` scoping from day one.
 
 ---
 
@@ -205,47 +206,52 @@ src/
 server/
 ├── src/
 │   ├── routes/
-│   │   ├── cards.ts            # CRUD for cards + state transitions
-│   │   ├── subtasks.ts         # Subtask management
-│   │   ├── approvals.ts        # Approve / reject pending cards
-│   │   └── users.ts            # User management (parents add kids)
+│   │   ├── auth.ts             # Register family + login
+│   │   ├── cards.ts            # CRUD for cards + state transitions + subtask toggle
+│   │   ├── approvals.ts        # Approve pending cards → pay kid
+│   │   └── users.ts            # List kids, reset balance
 │   ├── middleware/
-│   │   ├── auth.ts             # JWT verification
-│   │   └── roleGuard.ts        # Parent-only route protection
-│   ├── jobs/
-│   │   └── weeklyRebalance.ts  # Cron job — Sunday price rebalancing
-│   ├── models/                 # DB schemas (Family, User, Card)
-│   └── app.ts                  # Express setup
+│   │   └── auth.ts             # X-User-Id header → user lookup + requireRole helper
+│   ├── models/
+│   │   ├── family.model.ts
+│   │   ├── user.model.ts       # Embeds completedCards[]
+│   │   └── card.model.ts       # Embeds subtasks[]
+│   ├── app.ts                  # Express + CORS setup
+│   └── index.ts                # MongoDB connect + server listen
 └── package.json
 ```
 
 ---
 
-## API Endpoints (draft)
+## API Endpoints
+
+### Auth
+| Method | Path                    | Role | Description                                      |
+|--------|-------------------------|------|--------------------------------------------------|
+| POST   | `/api/auth/register`    | —    | Create family + parents + kids, returns dad user |
+| POST   | `/api/auth/login`       | —    | Look up member by family name + user name        |
 
 ### Cards
-| Method | Path                          | Role    | Description                          |
-|--------|-------------------------------|---------|--------------------------------------|
-| GET    | `/api/cards`                  | All     | List all cards                       |
-| POST   | `/api/cards`                  | Parent  | Create a card                        |
-| PUT    | `/api/cards/:id`              | Parent  | Edit card (title, price, subtasks)   |
-| DELETE | `/api/cards/:id`              | Parent  | Delete a card                        |
-| PATCH  | `/api/cards/:id/state`        | *       | Transition state (role-checked)      |
-| PATCH  | `/api/cards/:id/subtasks/:sid`| Kid     | Toggle subtask done                  |
+| Method | Path                           | Role   | Description                        |
+|--------|--------------------------------|--------|------------------------------------|
+| GET    | `/api/cards`                   | All    | List all cards for the family      |
+| GET    | `/api/cards/:id`               | All    | Get a single card                  |
+| POST   | `/api/cards`                   | Parent | Create a card                      |
+| PUT    | `/api/cards/:id`               | Parent | Replace title, price, subtasks     |
+| DELETE | `/api/cards/:id`               | Parent | Delete a card                      |
+| PATCH  | `/api/cards/:id/state`         | *      | Transition state (role-checked)    |
+| PATCH  | `/api/cards/:id/subtasks/:sid` | Kid    | Toggle subtask done                |
 
 ### Approvals
 | Method | Path                          | Role   | Description                          |
 |--------|-------------------------------|--------|--------------------------------------|
-| GET    | `/api/approvals`              | Parent | List all pending cards               |
-| POST   | `/api/approvals/:id/approve`  | Parent | Approve → pay kid, reset card        |
-| POST   | `/api/approvals/:id/reject`   | Parent | Reject → card back to taken          |
+| POST   | `/api/approvals/:id/approve`  | Parent | Approve → pay kid, card → suspended  |
 
 ### Users
-| Method | Path                          | Role   | Description                          |
-|--------|-------------------------------|--------|--------------------------------------|
-| GET    | `/api/users`                  | Parent | List all family members              |
-| POST   | `/api/users`                  | Parent | Add a kid account                    |
-| GET    | `/api/users/:id/history`      | All    | Earnings history for a user          |
+| Method | Path                  | Role   | Description              |
+|--------|-----------------------|--------|--------------------------|
+| GET    | `/api/users`          | Parent | List all kids in family  |
+| PATCH  | `/api/users/:id/pay`  | Parent | Reset kid's balance to 0 |
 
 ---
 
@@ -259,6 +265,24 @@ server/
 6. The weekly rebalancing preserves the total price pool (zero-sum redistribution), scoped per family.
 7. A `suspended` card is invisible to kids on the board.
 8. Every DB query must be scoped by `familyId` — no cross-family data access.
+
+---
+
+## Deployment
+
+| Layer    | Service        | URL                                        | Deploy trigger          |
+|----------|----------------|--------------------------------------------|-------------------------|
+| Frontend | GitHub Pages   | https://yoavmil.github.io/PigHouse/        | Push to `main`          |
+| Backend  | Render (free)  | https://pighouse.onrender.com              | Push to `main`          |
+| Database | MongoDB Atlas  | —                                          | Manual (always running) |
+
+**GitHub Actions** (`.github/workflows/deploy.yml`) builds the Angular app with `--base-href /PigHouse/` and pushes to the `gh-pages` branch on every push to `main`.
+
+**Render** auto-deploys from the `server/` root directory. Build: `npm install --include=dev && npm run build`. Start: `npm start`.
+
+**CORS** is restricted to `https://yoavmil.github.io` in production (`NODE_ENV=production`), `http://localhost:4200` in development.
+
+**Cold starts:** Render free tier sleeps after 15 min of inactivity — first request takes ~30 s to wake up. Use a keep-alive cron (e.g. cron-job.org hitting `/api/health` every 14 min) to avoid this.
 
 ---
 
