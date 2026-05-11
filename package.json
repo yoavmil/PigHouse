@@ -8,6 +8,16 @@
     "be:build":   "npm run build --prefix server",
     "be:start":   "npm run be:build && npm start --prefix server",
     "dev":        "npm run fe & npm run be",
-    "kill:be":    "npx kill-port 3000"
+    "kill:be":    "npx kill-port 3000",
+    "vercel:dev": "vercel dev"
+  },
+  "dependencies": {
+    "@vercel/postgres": "^0.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@vercel/node": "^5.0.0",
+    "typescript": "^5.4.5",
+    "vercel": "latest"
   }
 }
