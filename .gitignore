@@ -1,1 +1,16 @@
 .claude/settings.json
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+
+# Environment files
+.env
+**/.env
+
+# Logs
+*.log
