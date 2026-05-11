@@ -1,0 +1,89 @@
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(150deg, #4a148c 0%, #6a1b9a 40%, #880e4f 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  width: 100%;
+  max-width: 420px;
+}
+
+.title-section {
+  text-align: center;
+  color: white;
+}
+
+.pig-emoji {
+  font-size: 72px;
+  display: block;
+  margin-bottom: 3rem;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.4));
+  animation: bounce 2.5s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-10px); }
+}
+
+.app-title {
+  font-size: clamp(2rem, 8vw, 3rem);
+  font-weight: 900;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+  text-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+}
+
+.app-subtitle {
+  font-size: 1.05rem;
+  margin: 0;
+  opacity: 0.85;
+}
+
+.login-card {
+  width: 100%;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+}
+
+.card-heading {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin: 0 0 20px;
+  color: var(--mat-sys-on-surface);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.action-btn {
+  height: 48px;
+  font-size: 1rem;
+}
+
+.divider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.divider-row mat-divider {
+  flex: 1;
+  position: static !important;
+}
+
+.divider-text {
+  font-size: 0.85rem;
+  color: var(--mat-sys-outline);
+  white-space: nowrap;
+}

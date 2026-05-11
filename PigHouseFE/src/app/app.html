@@ -1,38 +1,47 @@
-<mat-sidenav-container class="sidenav-container">
-  <mat-sidenav
-    #sidenav
-    class="sidenav"
-    [mode]="isHandset() ? 'over' : 'side'"
-    [opened]="!isHandset()"
-  >
-    <mat-toolbar>בית של חזירים</mat-toolbar>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/board" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>home</mat-icon>
-        <span matListItemTitle>המשימות</span>
-      </a>
-      <a mat-list-item routerLink="/profile" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>person</mat-icon>
-        <span matListItemTitle>פרופיל</span>
-      </a>
-      <a mat-list-item routerLink="/admin" routerLinkActive="active-link">
-        <mat-icon matListItemIcon>settings</mat-icon>
-        <span matListItemTitle>ניהול</span>
-      </a>
-    </mat-nav-list>
-  </mat-sidenav>
+@if (authService.currentUser()) {
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav
+      #sidenav
+      class="sidenav"
+      [mode]="isHandset() ? 'over' : 'side'"
+      [opened]="!isHandset()"
+    >
+      <mat-toolbar>בית של חזירים</mat-toolbar>
+      <mat-nav-list>
+        <a mat-list-item routerLink="/board" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>home</mat-icon>
+          <span matListItemTitle>המשימות</span>
+        </a>
+        <a mat-list-item routerLink="/profile" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>person</mat-icon>
+          <span matListItemTitle>פרופיל</span>
+        </a>
+        <a mat-list-item routerLink="/admin" routerLinkActive="active-link">
+          <mat-icon matListItemIcon>settings</mat-icon>
+          <span matListItemTitle>ניהול</span>
+        </a>
+      </mat-nav-list>
+    </mat-sidenav>
 
-  <mat-sidenav-content>
-    <mat-toolbar color="primary">
-      @if (isHandset()) {
-        <button mat-icon-button (click)="sidenav.toggle()" aria-label="פתח תפריט">
-          <mat-icon>menu</mat-icon>
+    <mat-sidenav-content>
+      <mat-toolbar color="primary">
+        @if (isHandset()) {
+          <button mat-icon-button (click)="sidenav.toggle()" aria-label="פתח תפריט">
+            <mat-icon>menu</mat-icon>
+          </button>
+        }
+        <span>בית של חזירים</span>
+        <span class="toolbar-spacer"></span>
+        <span class="user-greeting">שלום, {{ authService.currentUser()!.name }}</span>
+        <button mat-icon-button (click)="logout()" aria-label="יציאה">
+          <mat-icon>logout</mat-icon>
         </button>
-      }
-      <span>בית של חזירים</span>
-    </mat-toolbar>
-    <main class="content">
-      <router-outlet />
-    </main>
-  </mat-sidenav-content>
-</mat-sidenav-container>
+      </mat-toolbar>
+      <main class="content">
+        <router-outlet />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+} @else {
+  <router-outlet />
+}

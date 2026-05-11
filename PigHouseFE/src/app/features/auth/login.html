@@ -1,0 +1,43 @@
+<div class="hero">
+  <div class="hero-content">
+
+    <div class="title-section">
+      <span class="pig-emoji">🐷</span>
+      <h1 class="app-title">בית של חזירים</h1>
+      <p class="app-subtitle">ניהול משימות הבית לכל המשפחה</p>
+    </div>
+
+    <mat-card class="login-card">
+      <mat-card-content>
+
+        <p class="card-heading">כניסה למערכת</p>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>שם מלא</mat-label>
+          <input matInput [formControl]="nameControl" placeholder="ישראל ישראלי" autocomplete="name">
+        </mat-form-field>
+
+        <button
+          mat-flat-button
+          class="full-width action-btn"
+          [disabled]="nameControl.invalid"
+          (click)="login()"
+        >
+          כניסה
+        </button>
+
+        <div class="divider-row">
+          <mat-divider />
+          <span class="divider-text">או</span>
+          <mat-divider />
+        </div>
+
+        <button mat-stroked-button class="full-width" (click)="createFamily()">
+          משפחה חדשה
+        </button>
+
+      </mat-card-content>
+    </mat-card>
+
+  </div>
+</div>
