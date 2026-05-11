@@ -1,24 +1,17 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsersService } from '../../core/services/users.service';
 import { User } from 'shared/types';
 
 @Component({
   selector: 'app-kids-stats',
-  imports: [MatExpansionModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
+  imports: [MatExpansionModule, MatButtonModule, MatProgressSpinnerModule],
   template: `
     <div class="container" dir="rtl">
 
-      <div class="top-bar">
-        <button mat-icon-button (click)="back()">
-          <mat-icon>arrow_forward</mat-icon>
-        </button>
-        <h2 class="page-title">סטטיסטיקות ילדים</h2>
-      </div>
+      <h2 class="page-title">סטטיסטיקות ילדים</h2>
 
       @if (loading()) {
         <div class="center"><mat-spinner diameter="48" /></div>
@@ -73,13 +66,7 @@ import { User } from 'shared/types';
       margin: 0 auto;
       padding: 16px;
     }
-    .top-bar {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      margin-bottom: 16px;
-    }
-    .page-title { margin: 0; font-size: 1.3rem; }
+    .page-title { margin: 0 0 16px; font-size: 1.3rem; }
     .center { display: flex; justify-content: center; padding: 48px 0; }
     .empty, .error { text-align: center; color: #888; margin-top: 48px; }
     .error { color: #c62828; }
@@ -93,7 +80,6 @@ import { User } from 'shared/types';
     }
     .kid-name { font-weight: 700; font-size: 1rem; flex: 1; }
     .debt { color: #c62828; font-weight: 600; font-size: 0.9rem; }
-    .no-debt { color: #2e7d32; font-size: 0.9rem; }
     .pay-btn {
       background-color: #1565c0 !important;
       color: white !important;
@@ -123,7 +109,6 @@ import { User } from 'shared/types';
 })
 export class KidsStatsComponent implements OnInit {
   private usersService = inject(UsersService);
-  private router       = inject(Router);
 
   kids    = signal<User[]>([]);
   loading = signal(true);
@@ -153,5 +138,4 @@ export class KidsStatsComponent implements OnInit {
     });
   }
 
-  back(): void { this.router.navigate(['/board']); }
 }

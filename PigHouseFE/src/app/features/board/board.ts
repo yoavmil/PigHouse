@@ -1,5 +1,4 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { debounceTime } from 'rxjs';
@@ -40,7 +39,6 @@ type CardGroup = FormGroup<{
 export class BoardComponent {
   private cardService      = inject(CardService);
   private approvalsService = inject(ApprovalsService);
-  private router           = inject(Router);
   private destroyRef       = inject(DestroyRef);
 
   loading            = signal(true);
@@ -126,8 +124,6 @@ export class BoardComponent {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: card => this.pushCard(card) });
   }
-
-  goToKids(): void { this.router.navigate(['/kids']); }
 
   approve(ci: number, event: MouseEvent): void {
     event.stopPropagation();

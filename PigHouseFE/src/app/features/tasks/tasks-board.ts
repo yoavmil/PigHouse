@@ -14,7 +14,7 @@ import { Card } from 'shared/types';
   imports: [MatExpansionModule, MatButtonModule, MatProgressSpinnerModule, MatProgressBarModule, MatIconModule],
   template: `
     <div class="container" dir="rtl">
-      <h2 class="page-title">המשימות שלי</h2>
+      <h2 class="page-title">עבודות פרך</h2>
 
       @if (loading()) {
         <div class="center"><mat-spinner diameter="48" /></div>
