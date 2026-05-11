@@ -61,26 +61,37 @@ Each **family** is the top-level data boundary. All cards, users, transactions, 
 
 ---
 
+## Users
+
+### User Fields
+| Field        | Description                                                        |
+|--------------|--------------------------------------------------------------------|
+| `id`         | Unique user ID                                                     |
+| `familyId`   | Reference to the family this user belongs to                       |
+| `name`       | Display name (Hebrew OK)                                           |
+| `role`       | `parent` or `kid`                                                  |
+| `balance`        | Accumulated unpaid earnings (₪) — kids only                   |
+| `completedCards` | List of every card this kid has been paid for (see below)      |
+| `createdAt`      | Timestamp                                                      |
+
+### CompletedCard Fields (embedded in User)
+| Field         | Description                                    |
+|---------------|------------------------------------------------|
+| `cardId`      | Reference to the original card                 |
+| `cardTitle`   | Snapshot of the title at approval time         |
+| `amount`      | Amount paid (₪)                                |
+| `completedAt` | Timestamp of parent approval                   |
+
+---
+
 ## Chore Card
 
 Each card represents a room or a task (e.g., "סלון", "חדר שינה", "כלים").
 
-### User Fields
-| Field        | Description                                      |
-|--------------|--------------------------------------------------|
-| `id`         | Unique user ID                                   |
-| `familyId`   | Reference to the family this user belongs to     |
-| `name`       | Display name (Hebrew OK)                         |
-| `role`       | `parent` or `kid`                                |
-| `balance`    | Accumulated unpaid earnings (₪), kids only       |
-| `totalEarned`| Lifetime total earnings (₪), kids only — never decreases |
-| `createdAt`  | Timestamp                                        |
-
----
-
 ### Card Fields
 | Field       | Description                                      |
 |-------------|--------------------------------------------------|
+| `id`        | Unique card ID                                   |
 | `familyId`  | Reference to the owning family                   |
 | `title`     | Name of the room / task (Hebrew)                 |
 | `subtasks`  | Ordered checklist of items to complete           |
@@ -91,10 +102,11 @@ Each card represents a room or a task (e.g., "סלון", "חדר שינה", "כ�
 | `updatedAt` | Timestamp                                        |
 
 ### Subtask Fields
-| Field       | Description                         |
-|-------------|-------------------------------------|
-| `text`      | Description of the subtask (Hebrew) |
-| `done`      | Boolean — checked off by the kid    |
+| Field  | Description                         |
+|--------|-------------------------------------|
+| `id`   | Unique subtask ID                   |
+| `text` | Description of the subtask (Hebrew) |
+| `done` | Boolean — checked off by the kid    |
 
 ---
 
@@ -110,14 +122,14 @@ available ──►│                           │
     └────────────────────────────────────────────────┘
 ```
 
-| State       | Hebrew        | Description                                                      | Who can enter this state         |
-|-------------|---------------|------------------------------------------------------------------|----------------------------------|
-| `suspended` | מושהה         | Task not currently needed (e.g., room is already clean)          | Parents only                     |
+| State       | Hebrew        | Description                                                      | Who can enter this state              |
+|-------------|---------------|------------------------------------------------------------------|---------------------------------------|
+| `suspended` | מושהה         | Task not currently needed (e.g., room is already clean)          | Parents only                          |
 | `available` | פנוי          | Card is open for a kid to pick up                                | Parents only (or auto after approval) |
-| `taken`     | נלקח          | A kid is actively working on it                                  | Kids or parents                  |
-| `pending`   | ממתין לאישור  | Kid finished; waiting for parent approval                        | Kids (the one who took it)       |
+| `taken`     | נלקח          | A kid is actively working on it                                  | Kids or parents                       |
+| `pending`   | ממתין לאישור  | Kid finished; waiting for parent approval                        | Kid who holds the card                |
 
-**Approval flow:** Parent reviews a `pending` card → approves → payment is credited to the kid → card returns to `available` (or `suspended` if parent chooses).
+**Approval flow:** Parent reviews a `pending` card → approves → payment credited to kid → card returns to `available`.
 
 ---
 
@@ -175,7 +187,7 @@ server/
 │   │   └── roleGuard.ts        # Parent-only route protection
 │   ├── jobs/
 │   │   └── weeklyRebalance.ts  # Cron job — Sunday price rebalancing
-│   ├── models/                 # DB schemas (Family, User, Card, Transaction)
+│   ├── models/                 # DB schemas (Family, User, Card)
 │   └── app.ts                  # Express setup
 └── package.json
 ```
