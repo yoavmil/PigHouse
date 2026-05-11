@@ -15,6 +15,7 @@ export class CardService {
   delete(id: string)                         { return this.http.delete<void>(`${this.BASE}/${id}`); }
   takeCard(id: string)                       { return this.http.patch<Card>(`${this.BASE}/${id}/state`, { state: 'taken' }); }
   markPending(id: string)                    { return this.http.patch<Card>(`${this.BASE}/${id}/state`, { state: 'pending' }); }
+  giveUpCard(id: string)                     { return this.http.patch<Card>(`${this.BASE}/${id}/state`, { state: 'available' }); }
   toggleSubtask(cardId: string, subtaskId: string, done: boolean) {
     return this.http.patch<{ id: string; text: string; done: boolean }>(
       `${this.BASE}/${cardId}/subtasks/${subtaskId}`, { done }

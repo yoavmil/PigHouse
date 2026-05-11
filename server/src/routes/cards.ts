@@ -91,14 +91,38 @@ router.patch('/:id/state', async (req: Request, res: Response): Promise<void> =>
     return;
   }
 
-  // Parent-only: suspended / available
-  if (!['suspended', 'available'].includes(state)) {
+  if (state === 'available') {
+    if (user.role === 'kid') {
+      // Kid giving up — only allowed if they currently hold the card
+      const card = await Card.findOne({ _id: req.params['id'], familyId: user.familyId, state: 'taken', takenBy: user._id });
+      if (!card) { res.status(403).json({ error: 'אין גישה' }); return; }
+      card.state = 'available';
+      card.takenBy = null;
+      card.subtasks.forEach(s => { s.done = false; });
+      await card.save();
+      res.json(card.toJSON());
+      return;
+    }
+    // Parent sets available
+    const card = await Card.findOneAndUpdate(
+      { _id: req.params['id'], familyId: user.familyId },
+      { state: 'available', takenBy: null, 'subtasks.$[].done': false },
+      { new: true }
+    );
+    if (!card) { res.status(404).json({ error: 'Card not found' }); return; }
+    res.json(card.toJSON());
+    return;
+  }
+
+  // Parent-only: suspended
+  if (user.role !== 'parent') { res.status(403).json({ error: 'אין גישה' }); return; }
+  if (state !== 'suspended') {
     res.status(400).json({ error: 'Invalid state' });
     return;
   }
   const card = await Card.findOneAndUpdate(
     { _id: req.params['id'], familyId: user.familyId },
-    { state, ...(state === 'available' ? { takenBy: null } : {}) },
+    { state },
     { new: true }
   );
   if (!card) { res.status(404).json({ error: 'Card not found' }); return; }

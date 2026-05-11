@@ -5,12 +5,14 @@ import { BoardComponent }      from './features/board/board';
 import { TasksBoardComponent } from './features/tasks/tasks-board';
 import { TaskDetailComponent } from './features/tasks/task-detail';
 import { parentGuard }         from './core/auth/parent.guard';
+import { KidsStatsComponent }  from './features/kids-stats/kids-stats';
 
 export const routes: Routes = [
   { path: '',           component: LoginComponent },
   { path: 'register',  component: RegisterComponent },
-  { path: 'board',     component: BoardComponent, canActivate: [parentGuard] },
-  { path: 'tasks',     component: TasksBoardComponent }, // kid card list
-  { path: 'tasks/:id', component: TaskDetailComponent }, // kid active task
+  { path: 'board',     component: BoardComponent,      canActivate: [parentGuard] },
+  { path: 'kids',      component: KidsStatsComponent,  canActivate: [parentGuard] },
+  { path: 'tasks',     component: TasksBoardComponent },
+  { path: 'tasks/:id', component: TaskDetailComponent },
   { path: '**',        redirectTo: '' },
 ];

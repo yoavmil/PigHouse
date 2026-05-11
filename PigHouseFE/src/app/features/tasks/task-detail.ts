@@ -47,6 +47,9 @@ import { Card } from 'shared/types';
         @if (submitError()) {
           <p class="error">{{ submitError() }}</p>
         }
+        @if (giveUpError()) {
+          <p class="error">{{ giveUpError() }}</p>
+        }
 
         <button mat-flat-button color="primary" class="done-btn"
                 [disabled]="!allDone() || submitting()"
@@ -55,6 +58,16 @@ import { Card } from 'shared/types';
             <mat-spinner diameter="20" />
           } @else {
             סיימתי! 🐷
+          }
+        </button>
+
+        <button mat-stroked-button color="warn" class="give-up-btn"
+                [disabled]="givingUp()"
+                (click)="giveUp()">
+          @if (givingUp()) {
+            <mat-spinner diameter="20" />
+          } @else {
+            ויתרתי
           }
         </button>
 
@@ -102,6 +115,13 @@ import { Card } from 'shared/types';
       padding: 12px;
       height: auto;
     }
+    .give-up-btn {
+      width: 100%;
+      margin-top: 10px;
+      font-size: 1rem;
+      padding: 10px;
+      height: auto;
+    }
     .error { color: #c62828; text-align: center; }
     mat-spinner { display: inline-block; }
   `],
@@ -116,6 +136,8 @@ export class TaskDetailComponent implements OnInit {
   error       = signal<string | null>(null);
   submitting  = signal(false);
   submitError = signal<string | null>(null);
+  givingUp    = signal(false);
+  giveUpError = signal<string | null>(null);
 
   doneCount = computed(() => this.card()?.subtasks.filter(s => s.done).length ?? 0);
   allDone   = computed(() => { const c = this.card(); return !!c && c.subtasks.length > 0 && this.doneCount() === c.subtasks.length; });
@@ -159,6 +181,18 @@ export class TaskDetailComponent implements OnInit {
       error: () => {
         this.submitError.set('שגיאה, נסה שוב');
         this.submitting.set(false);
+      },
+    });
+  }
+
+  giveUp(): void {
+    this.givingUp.set(true);
+    this.giveUpError.set(null);
+    this.cardService.giveUpCard(this.cardId).subscribe({
+      next:  () => this.router.navigate(['/tasks']),
+      error: () => {
+        this.giveUpError.set('שגיאה, נסה שוב');
+        this.givingUp.set(false);
       },
     });
   }
