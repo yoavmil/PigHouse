@@ -18,7 +18,28 @@ The app is entirely in **Hebrew**.
 |-----------|---------------------|
 | Frontend  | Angular              |
 | Backend   | Node.js (Express)    |
-| Database  | TBD (MongoDB or PostgreSQL) |
+| Database  | MongoDB (via Mongoose)      |
+
+---
+
+## Multi-Family Support
+
+Each **family** is the top-level data boundary. All cards, users, transactions, and pricing are scoped to a family — no data leaks between families.
+
+### Family Entity
+| Field        | Description                                      |
+|--------------|--------------------------------------------------|
+| `id`         | Unique family ID                                 |
+| `name`       | Display name (e.g., "משפחת מילר")                |
+| `createdAt`  | Timestamp                                        |
+
+### Login Flow
+- A family logs in with a shared family identifier (e.g., family name or invite code).
+- Within the family, each member (parent or kid) has their own account.
+- Authentication is family-scoped: JWT payload carries both `familyId` and `userId`.
+- All API queries are automatically filtered by `familyId` derived from the token — no cross-family data access is possible.
+
+> Security is deferred for MVP, but the schema and query layer must always enforce `familyId` scoping from day one.
 
 ---
 
@@ -30,6 +51,7 @@ The app is entirely in **Hebrew**.
 - Move cards between any state
 - Approve completed chore cards → triggers payment
 - Manage the weekly price-rebalancing algorithm
+- Manage family members (add/remove kids)
 
 ### Kids (ילדים)
 - View all available cards
@@ -43,9 +65,23 @@ The app is entirely in **Hebrew**.
 
 Each card represents a room or a task (e.g., "סלון", "חדר שינה", "כלים").
 
+### User Fields
+| Field        | Description                                      |
+|--------------|--------------------------------------------------|
+| `id`         | Unique user ID                                   |
+| `familyId`   | Reference to the family this user belongs to     |
+| `name`       | Display name (Hebrew OK)                         |
+| `role`       | `parent` or `kid`                                |
+| `balance`    | Accumulated unpaid earnings (₪), kids only       |
+| `totalEarned`| Lifetime total earnings (₪), kids only — never decreases |
+| `createdAt`  | Timestamp                                        |
+
+---
+
 ### Card Fields
 | Field       | Description                                      |
 |-------------|--------------------------------------------------|
+| `familyId`  | Reference to the owning family                   |
 | `title`     | Name of the room / task (Hebrew)                 |
 | `subtasks`  | Ordered checklist of items to complete           |
 | `price`     | Current payment amount (₪)                       |
@@ -139,7 +175,7 @@ server/
 │   │   └── roleGuard.ts        # Parent-only route protection
 │   ├── jobs/
 │   │   └── weeklyRebalance.ts  # Cron job — Sunday price rebalancing
-│   ├── models/                 # DB schemas (Card, User, Transaction)
+│   ├── models/                 # DB schemas (Family, User, Card, Transaction)
 │   └── app.ts                  # Express setup
 └── package.json
 ```
@@ -181,8 +217,9 @@ server/
 3. Subtasks can only be toggled while the card is in `taken` state by the kid who holds it.
 4. Parents can override any state transition at any time.
 5. Payment is only credited after explicit parent approval.
-6. The weekly rebalancing preserves the total price pool (zero-sum redistribution).
+6. The weekly rebalancing preserves the total price pool (zero-sum redistribution), scoped per family.
 7. A `suspended` card is invisible to kids on the board.
+8. Every DB query must be scoped by `familyId` — no cross-family data access.
 
 ---
 
@@ -191,4 +228,4 @@ server/
 - Push notifications when a card is approved / rejected
 - Leaderboard / gamification badges
 - Photo evidence upload before approval request
-- Multi-family / multi-household support
+- Proper authentication security (hashed passwords, refresh tokens, etc.)
