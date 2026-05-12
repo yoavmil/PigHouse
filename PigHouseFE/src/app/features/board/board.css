@@ -35,9 +35,10 @@ mat-accordion {
   padding: 0 12px;
 }
 
-.pending-panel {
-  border-right: 4px solid #f9a825 !important;
-}
+.state-available { border-right: 4px solid #2e7d32 !important; }
+.state-suspended  { border-right: 4px solid #9e9e9e !important; }
+.state-taken      { border-right: 4px solid #1565c0 !important; }
+.state-pending    { border-right: 4px solid #f9a825 !important; }
 
 .full-width {
   width: 100%;

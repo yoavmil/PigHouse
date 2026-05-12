@@ -32,7 +32,7 @@
         }
         <span>בית של חזירים</span>
         <span class="toolbar-spacer"></span>
-        <span class="user-greeting">שלום, {{ authService.currentUser()!.name }}</span>
+        <span class="user-greeting">{{ authService.currentUser()!.name }}</span>
         <button mat-icon-button (click)="logout()" aria-label="יציאה">
           <mat-icon>logout</mat-icon>
         </button>

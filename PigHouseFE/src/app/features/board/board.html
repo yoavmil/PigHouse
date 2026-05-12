@@ -12,7 +12,10 @@
 
       @for (card of cards.controls; track cardIds[$index]; let ci = $index) {
         <mat-expansion-panel class="card-panel"
-          [class.pending-panel]="cards.at(ci).controls.state.value === 'pending'">
+          [class.state-available]="cards.at(ci).controls.state.value === 'available'"
+          [class.state-suspended]="cards.at(ci).controls.state.value === 'suspended'"
+          [class.state-taken]="cards.at(ci).controls.state.value === 'taken'"
+          [class.state-pending]="cards.at(ci).controls.state.value === 'pending'">
 
           <mat-expansion-panel-header>
             <mat-panel-title class="panel-title">

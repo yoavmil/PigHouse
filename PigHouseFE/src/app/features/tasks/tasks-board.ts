@@ -14,7 +14,15 @@ import { Card } from 'shared/types';
   imports: [MatExpansionModule, MatButtonModule, MatProgressSpinnerModule, MatProgressBarModule, MatIconModule],
   template: `
     <div class="container" dir="rtl">
-      <h2 class="page-title">עבודות פרך</h2>
+      <div class="top-bar">
+        <h2 class="page-title">עבודות פרך</h2>
+        <div class="user-info">
+          <span class="user-name">{{ auth.currentUser()!.name }}</span>
+          <button mat-icon-button (click)="logout()" aria-label="יציאה">
+            <mat-icon>logout</mat-icon>
+          </button>
+        </div>
+      </div>
 
       @if (loading()) {
         <div class="center"><mat-spinner diameter="48" /></div>
@@ -24,7 +32,7 @@ import { Card } from 'shared/types';
 
         <!-- Active task -->
         @if (activeCard()) {
-          <p class="section-label">המשימה שלי כעת</p>
+          <p class="section-label">אני על זה</p>
           <div class="active-card" (click)="goToActive()">
             <div class="active-header">
               <span class="active-title">{{ activeCard()!.title }}</span>
@@ -101,11 +109,18 @@ import { Card } from 'shared/types';
       margin: 0 auto;
       padding: 16px;
     }
-    .page-title {
-      text-align: center;
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
       margin-bottom: 20px;
+    }
+    .page-title {
+      margin: 0;
       font-size: 1.4rem;
     }
+    .user-info { display: flex; align-items: center; gap: 4px; }
+    .user-name { font-size: 0.9rem; color: #555; }
     .center { display: flex; justify-content: center; padding: 48px 0; }
     .empty, .error { text-align: center; color: #888; margin-top: 48px; }
     .error { color: #c62828; }
@@ -176,7 +191,7 @@ import { Card } from 'shared/types';
 })
 export class TasksBoardComponent implements OnInit {
   private cardService = inject(CardService);
-  private auth        = inject(AuthService);
+  protected auth      = inject(AuthService);
   private router      = inject(Router);
 
   activeCard    = signal<Card | null>(null);
@@ -212,6 +227,11 @@ export class TasksBoardComponent implements OnInit {
 
   goToActive(): void {
     this.router.navigate(['/tasks', this.activeCard()!.id]);
+  }
+
+  logout(): void {
+    this.auth.logout();
+    this.router.navigate(['/']);
   }
 
   takeCard(card: Card): void {
