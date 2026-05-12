@@ -20,6 +20,9 @@
           <mat-expansion-panel-header>
             <mat-panel-title class="panel-title">
               <span class="title-text">{{ cardTitle(ci) }}</span>
+              @if (cards.at(ci).controls.state.value === 'taken') {
+                <span class="taken-by">{{ kidName(ci) }}</span>
+              }
               @if (cards.at(ci).controls.state.value === 'pending') {
                 <button mat-flat-button class="approve-btn"
                         (click)="approve(ci, $event)">

@@ -26,6 +26,12 @@ mat-accordion {
   width: 100%;
 }
 
+.taken-by {
+  font-size: 0.8rem;
+  color: #1565c0;
+  font-weight: 500;
+}
+
 .approve-btn {
   background-color: #2e7d32 !important;
   color: white !important;

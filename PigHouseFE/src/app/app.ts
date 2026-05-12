@@ -37,6 +37,10 @@ export class App {
     { initialValue: false }
   );
 
+  navClick(sidenav: { close(): void }): void {
+    if (this.isHandset()) sidenav.close();
+  }
+
   logout(): void {
     this.authService.logout();
     this.router.navigate(['/']);

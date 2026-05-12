@@ -1,7 +1,7 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { debounceTime } from 'rxjs';
+import { debounceTime, forkJoin } from 'rxjs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +12,7 @@ import { MatProgressSpinner } from '@angular/material/progress-spinner';
 import { Card, CardState } from 'shared/types';
 import { CardService } from '../../core/services/card.service';
 import { ApprovalsService } from '../../core/services/approvals.service';
+import { UsersService } from '../../core/services/users.service';
 
 type SubtaskControl = FormControl<string | null>;
 type CardGroup = FormGroup<{
@@ -39,21 +40,32 @@ type CardGroup = FormGroup<{
 export class BoardComponent {
   private cardService      = inject(CardService);
   private approvalsService = inject(ApprovalsService);
+  private usersService     = inject(UsersService);
   private destroyRef       = inject(DestroyRef);
 
   loading            = signal(true);
   error              = signal<string | null>(null);
   confirmDeleteIndex = signal<number | null>(null);
 
-  cardIds: string[]       = [];
+  cardIds:     string[]           = [];
+  cardTakenBy: (string | null)[]  = [];
   cards = new FormArray<CardGroup>([]);
 
+  private kidMap = new Map<string, string>();
+
   constructor() {
-    this.cardService.getAll()
+    forkJoin({
+      cards: this.cardService.getAll(),
+      kids:  this.usersService.getKids(),
+    })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-        next:  cards => { cards.forEach(c => this.pushCard(c)); this.loading.set(false); },
-        error: ()    => { this.error.set('שגיאה בטעינת הכרטיסים'); this.loading.set(false); },
+        next: ({ cards, kids }) => {
+          this.kidMap = new Map(kids.map(k => [k.id, k.name]));
+          cards.forEach(c => this.pushCard(c));
+          this.loading.set(false);
+        },
+        error: () => { this.error.set('שגיאה בטעינת הכרטיסים'); this.loading.set(false); },
       });
   }
 
@@ -70,6 +82,7 @@ export class BoardComponent {
     });
 
     this.cardIds.push(card.id);
+    this.cardTakenBy.push(card.takenBy);
     this.cards.push(group);
 
     group.valueChanges.pipe(
@@ -90,6 +103,10 @@ export class BoardComponent {
     this.cardService.update(id, { title: title ?? '', price: price ?? 0, state: state ?? undefined, subtasks: filteredSubtasks })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe();
+  }
+
+  kidName(ci: number): string {
+    return this.kidMap.get(this.cardTakenBy[ci] ?? '') ?? '';
   }
 
   getSubtasks(ci: number): FormArray<SubtaskControl> {
@@ -133,6 +150,7 @@ export class BoardComponent {
       .subscribe({
         next: () => {
           this.cards.at(ci).controls.state.setValue('suspended', { emitEvent: false });
+          this.cardTakenBy[ci] = null;
         },
       });
   }
@@ -148,6 +166,7 @@ export class BoardComponent {
         next: () => {
           this.cards.removeAt(ci);
           this.cardIds.splice(ci, 1);
+          this.cardTakenBy.splice(ci, 1);
           this.confirmDeleteIndex.set(null);
         },
       });

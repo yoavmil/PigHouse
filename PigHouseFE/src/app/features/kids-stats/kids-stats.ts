@@ -1,9 +1,11 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { forkJoin } from 'rxjs';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { UsersService } from '../../core/services/users.service';
-import { User } from 'shared/types';
+import { CardService } from '../../core/services/card.service';
+import { Card, User } from 'shared/types';
 
 @Component({
   selector: 'app-kids-stats',
@@ -22,26 +24,32 @@ import { User } from 'shared/types';
       } @else {
         <mat-accordion>
           @for (kid of kids(); track kid.id) {
-            <mat-expansion-panel>
+            <mat-expansion-panel [class.active-kid]="takenCards.has(kid.id)">
 
               <mat-expansion-panel-header>
                 <mat-panel-title class="header-title">
                   <span class="kid-name">{{ kid.name }}</span>
+                  @if (takenCards.has(kid.id)) {
+                    <span class="working-badge">🔨</span>
+                  }
                   @if (kid.balance > 0) {
                     <span class="debt">חוב: {{ kid.balance }}₪</span>
                     <button mat-flat-button class="pay-btn"
-                          [disabled]="kid.balance === 0 || paying()[kid.id]"
+                          [disabled]="paying()[kid.id]"
                           (click)="pay(kid, $event)">
-                    @if (paying()[kid.id]) {
-                      <mat-spinner diameter="16" />
-                    } @else {
-                      שולם
-                    }
-                  </button>
+                      @if (paying()[kid.id]) {
+                        <mat-spinner diameter="16" />
+                      } @else {
+                        שולם
+                      }
+                    </button>
                   }
-                  
                 </mat-panel-title>
               </mat-expansion-panel-header>
+
+              @if (takenCards.has(kid.id)) {
+                <p class="active-task">עכשיו עובד על: <strong>{{ takenCards.get(kid.id)!.title }}</strong></p>
+              }
 
               <div class="stats-row">
                 <div class="stat">
@@ -71,6 +79,8 @@ import { User } from 'shared/types';
     .empty, .error { text-align: center; color: #888; margin-top: 48px; }
     .error { color: #c62828; }
 
+    .active-kid { border-right: 4px solid #1565c0 !important; }
+
     .header-title {
       display: flex;
       align-items: center;
@@ -79,6 +89,7 @@ import { User } from 'shared/types';
       gap: 10px;
     }
     .kid-name { font-weight: 700; font-size: 1rem; flex: 1; }
+    .working-badge { font-size: 0.8rem; color: #1565c0; }
     .debt { color: #c62828; font-weight: 600; font-size: 0.9rem; }
     .pay-btn {
       background-color: #1565c0 !important;
@@ -90,6 +101,12 @@ import { User } from 'shared/types';
       min-width: unset;
     }
     .pay-btn:disabled { opacity: 0.4; }
+
+    .active-task {
+      font-size: 0.9rem;
+      color: #1565c0;
+      margin: 0 0 12px;
+    }
 
     .stats-row {
       display: flex;
@@ -109,16 +126,29 @@ import { User } from 'shared/types';
 })
 export class KidsStatsComponent implements OnInit {
   private usersService = inject(UsersService);
+  private cardService  = inject(CardService);
 
-  kids    = signal<User[]>([]);
-  loading = signal(true);
-  error   = signal<string | null>(null);
-  paying  = signal<Record<string, boolean>>({});
+  kids       = signal<User[]>([]);
+  loading    = signal(true);
+  error      = signal<string | null>(null);
+  paying     = signal<Record<string, boolean>>({});
+  takenCards = new Map<string, Card>();
 
   ngOnInit(): void {
-    this.usersService.getKids().subscribe({
-      next:  kids => { this.kids.set(kids); this.loading.set(false); },
-      error: ()   => { this.error.set('שגיאה בטעינת הנתונים'); this.loading.set(false); },
+    forkJoin({
+      kids:  this.usersService.getKids(),
+      cards: this.cardService.getAll(),
+    }).subscribe({
+      next: ({ kids, cards }) => {
+        this.kids.set(kids);
+        this.takenCards = new Map(
+          cards
+            .filter(c => c.state === 'taken' && c.takenBy)
+            .map(c => [c.takenBy!, c])
+        );
+        this.loading.set(false);
+      },
+      error: () => { this.error.set('שגיאה בטעינת הנתונים'); this.loading.set(false); },
     });
   }
 
@@ -137,5 +167,4 @@ export class KidsStatsComponent implements OnInit {
       error: () => this.paying.update(p => ({ ...p, [kid.id]: false })),
     });
   }
-
 }

@@ -8,15 +8,15 @@
     >
       <mat-toolbar>בית של חזירים 🐷</mat-toolbar>
       <mat-nav-list>
-        <a mat-list-item routerLink="/board" routerLinkActive="active-link">
+        <a mat-list-item routerLink="/board" routerLinkActive="active-link" (click)="navClick(sidenav)">
           <mat-icon matListItemIcon>checklist</mat-icon>
           <span matListItemTitle>משימות</span>
         </a>
-        <a mat-list-item routerLink="/kids" routerLinkActive="active-link">
+        <a mat-list-item routerLink="/kids" routerLinkActive="active-link" (click)="navClick(sidenav)">
           <mat-icon matListItemIcon>people</mat-icon>
           <span matListItemTitle>ילדים</span>
         </a>
-        <a mat-list-item routerLink="/admin" routerLinkActive="active-link">
+        <a mat-list-item routerLink="/admin" routerLinkActive="active-link" (click)="navClick(sidenav)">
           <mat-icon matListItemIcon>settings</mat-icon>
           <span matListItemTitle>ניהול</span>
         </a>
