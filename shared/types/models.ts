@@ -25,16 +25,24 @@ export interface Subtask {
   done: boolean;
 }
 
+export interface CardCompletionEntry {
+  kidId:       string;
+  kidName:     string;
+  price:       number;
+  completedAt: string;
+}
+
 export interface Card {
-  id:        string;
-  familyId:  string;
-  title:     string;
-  subtasks:  Subtask[];
-  price:     number;
-  state:     CardState;
-  takenBy:   string | null; // userId of the kid holding it, null otherwise
-  createdAt: string;
-  updatedAt: string;
+  id:                string;
+  familyId:          string;
+  title:             string;
+  subtasks:          Subtask[];
+  price:             number;
+  state:             CardState;
+  takenBy:           string | null; // userId of the kid holding it, null otherwise
+  completionHistory: CardCompletionEntry[];
+  createdAt:         string;
+  updatedAt:         string;
 }
 
 export interface ApiError {

@@ -47,8 +47,9 @@ export class BoardComponent {
   error              = signal<string | null>(null);
   confirmDeleteIndex = signal<number | null>(null);
 
-  cardIds:     string[]           = [];
-  cardTakenBy: (string | null)[]  = [];
+  cardIds:              string[]           = [];
+  cardTakenBy:          (string | null)[]  = [];
+  cardCompletionCounts: number[]           = [];
   cards = new FormArray<CardGroup>([]);
 
   private kidMap = new Map<string, string>();
@@ -83,6 +84,7 @@ export class BoardComponent {
 
     this.cardIds.push(card.id);
     this.cardTakenBy.push(card.takenBy);
+    this.cardCompletionCounts.push(card.completionHistory.length);
     this.cards.push(group);
 
     group.valueChanges.pipe(
@@ -114,7 +116,9 @@ export class BoardComponent {
   }
 
   cardTitle(ci: number): string {
-    return this.cards.at(ci).controls.title.value?.trim() || 'כרטיס חדש';
+    const title = this.cards.at(ci).controls.title.value?.trim() || 'כרטיס חדש';
+    const count = this.cardCompletionCounts[ci];
+    return count > 0 ? `${title} (${count})` : title;
   }
 
   // ── subtask events ─────────────────────────────────────────────────────────
@@ -151,6 +155,7 @@ export class BoardComponent {
         next: () => {
           this.cards.at(ci).controls.state.setValue('suspended', { emitEvent: false });
           this.cardTakenBy[ci] = null;
+          this.cardCompletionCounts[ci]++;
         },
       });
   }
@@ -167,6 +172,7 @@ export class BoardComponent {
           this.cards.removeAt(ci);
           this.cardIds.splice(ci, 1);
           this.cardTakenBy.splice(ci, 1);
+          this.cardCompletionCounts.splice(ci, 1);
           this.confirmDeleteIndex.set(null);
         },
       });

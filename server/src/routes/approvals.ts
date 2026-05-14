@@ -26,7 +26,13 @@ router.post('/:id/approve', requireRole('parent'), async (req: Request, res: Res
   });
   await kid.save();
 
-  card.state  = 'suspended';
+  (card.completionHistory as any[]).push({
+    kidId:       kid._id,
+    kidName:     kid.name,
+    price:       card.price,
+    completedAt: new Date(),
+  });
+  card.state   = 'suspended';
   card.takenBy = null;
   card.subtasks.forEach(s => { s.done = false; });
   await card.save();
