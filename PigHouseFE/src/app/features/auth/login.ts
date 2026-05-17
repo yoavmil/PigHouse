@@ -42,11 +42,12 @@ export class LoginComponent implements OnInit {
   login(): void {
     if (this.form.invalid || this.loading()) return;
 
-    const { familyName, userName } = this.form.value;
+    const familyName = this.form.value.familyName!.trim();
+    const userName   = this.form.value.userName!.trim();
     this.loading.set(true);
     this.error.set(null);
 
-    this.auth.login({ familyName: familyName!, userName: userName! }).subscribe({
+    this.auth.login({ familyName, userName }).subscribe({
       next: res => this.router.navigate([res.user.role === 'parent' ? '/board' : '/tasks']),
       error: err => {
         this.error.set(err.error?.error ?? 'שם משפחה או שם משתמש שגויים');
