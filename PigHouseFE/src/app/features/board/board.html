@@ -20,7 +20,7 @@
           <mat-expansion-panel-header>
             <mat-panel-title class="panel-title">
               <span class="title-text">{{ cardTitle(ci) }}</span>
-              @if (cards.at(ci).controls.state.value === 'taken') {
+              @if (cards.at(ci).controls.state.value === 'taken' || cards.at(ci).controls.state.value === 'pending') {
                 <span class="taken-by">{{ kidName(ci) }}</span>
               }
               @if (cards.at(ci).controls.state.value === 'pending') {
